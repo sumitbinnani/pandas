@@ -219,7 +219,7 @@ def to_datetime(arg, errors='raise', dayfirst=False, yearfirst=False,
     exact : boolean, True by default
         - If True, require an exact format match.
         - If False, allow the format to match anywhere in the target string.
-    unit : unit of the arg (D,s,ms,us,ns) denote the unit in epoch
+    unit : unit of the arg (D,s,ms,us,ns,julian) denote the unit in epoch
         (e.g. a unix timestamp), which is an integer/float number.
     infer_datetime_format : boolean, default False
         If no `format` is given, try to infer the format based on the first
@@ -271,6 +271,11 @@ def to_datetime(arg, errors='raise', dayfirst=False, yearfirst=False,
     >>> pd.to_datetime('13000101', format='%Y%m%d', errors='coerce')
     NaT
     """
+    if unit == 'julian':
+        from pandas.core.api import Timestamp
+        unit = 'D'
+        arg = arg - Timestamp(0).to_julian_date()
+        
     return _to_datetime(arg, errors=errors, dayfirst=dayfirst, yearfirst=yearfirst,
                         utc=utc, box=box, format=format, exact=exact,
                         unit=unit, infer_datetime_format=infer_datetime_format)
