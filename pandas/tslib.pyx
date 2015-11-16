@@ -3230,6 +3230,10 @@ cpdef inline int64_t cast_from_unit(object ts, object unit) except? -1:
     cdef:
         int64_t m
         int p
+        
+    if unit == 'julian':
+        unit = 'D'
+        ts = ts - Timestamp(0).to_julian_date()
 
     if unit == 'D' or unit == 'd':
         m = 1000000000L * 86400
