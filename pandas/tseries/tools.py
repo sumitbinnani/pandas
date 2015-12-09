@@ -182,7 +182,7 @@ def _guess_datetime_format_for_array(arr, **kwargs):
                  mapping={True: 'coerce', False: 'raise'})
 def to_datetime(arg, errors='raise', dayfirst=False, yearfirst=False,
                 utc=None, box=True, format=None, exact=True, coerce=None,
-                unit='ns', infer_datetime_format=False):
+                unit='ns', infer_datetime_format=False, origin=None):
     """
     Convert argument to datetime.
 
@@ -219,11 +219,13 @@ def to_datetime(arg, errors='raise', dayfirst=False, yearfirst=False,
     exact : boolean, True by default
         - If True, require an exact format match.
         - If False, allow the format to match anywhere in the target string.
-    unit : unit of the arg (D,s,ms,us,ns,julian) denote the unit in epoch
+    unit : unit of the arg (D,s,ms,us,ns) denote the unit in epoch
         (e.g. a unix timestamp), which is an integer/float number.
     infer_datetime_format : boolean, default False
         If no `format` is given, try to infer the format based on the first
         datetime string. Provides a large speed-up in many cases.
+    origin : datetime.date, default None
+        Equivalent to origin parameter of as.date in R Statistical Package
 
     Returns
     -------
@@ -271,10 +273,14 @@ def to_datetime(arg, errors='raise', dayfirst=False, yearfirst=False,
     >>> pd.to_datetime('13000101', format='%Y%m%d', errors='coerce')
     NaT
     """
-    if unit == 'julian':
+    
+    if origin is not None:
+        import datetime
         from pandas.core.api import Timestamp
-        unit = 'D'
-        arg = arg - Timestamp(0).to_julian_date()
+        if origin == 'julian':
+            arg = arg - Timestamp(0).to_julian_date()
+        elif isinstance(origin, datetime.date):
+            arg = arg + Timestamp(origin).to_julian_date() - Timestamp(0).to_julian_date()
         
     return _to_datetime(arg, errors=errors, dayfirst=dayfirst, yearfirst=yearfirst,
                         utc=utc, box=box, format=format, exact=exact,
