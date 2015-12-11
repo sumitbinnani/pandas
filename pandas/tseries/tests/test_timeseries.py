@@ -1,6 +1,6 @@
 # pylint: disable-msg=E1101,W0612
 import calendar
-from datetime import date, datetime, time, timedelta
+from datetime import datetime, time, timedelta
 import sys
 import operator
 import warnings
@@ -745,6 +745,7 @@ class TestTimeSeries(tm.TestCase):
         assert_series_equal(result,expected)
         
     def test_to_datetime_origin(self):
+        # Addresses Issue Number 11276, 11745
         # for origin as julian
         julian_dates = pd.date_range('2014-1-1', periods=10).to_julian_date().values
         result = Series(pd.to_datetime(julian_dates, unit='D', origin='julian'))
@@ -752,11 +753,14 @@ class TestTimeSeries(tm.TestCase):
         assert_series_equal(result,expected)
         
         # for origin as 1960-01-01
-        EPOCH1960 = date(1960, 1, 1)
+        EPOCH1960 = pd.Timestamp('1960-01-01')
+        EPOCH_TimestampConvertible = [EPOCH1960, EPOCH1960.to_datetime(), EPOCH1960.to_datetime64(), str(EPOCH1960)] 
         daysFromEpoch = range(5)
-        result = Series(pd.to_datetime(daysFromEpoch, unit='D', origin=EPOCH1960))
         expected = Series(pd.date_range('1960-1-1', periods=5))
-        assert_series_equal(result,expected)
+        
+        for EPOCH in EPOCH_TimestampConvertible:
+            result = Series(pd.to_datetime(daysFromEpoch, unit='D', origin=EPOCH))
+            assert_series_equal(result,expected)
         
         
 
