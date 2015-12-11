@@ -224,8 +224,9 @@ def to_datetime(arg, errors='raise', dayfirst=False, yearfirst=False,
     infer_datetime_format : boolean, default False
         If no `format` is given, try to infer the format based on the first
         datetime string. Provides a large speed-up in many cases.
-    origin : datetime.date, default None
-        Equivalent to origin parameter of as.date in R Statistical Package
+    origin : scalar convertible to Timestamp / `julian`
+        Define relative offset for the returned dates
+        - If `julian`, offset is set to beginning of Julian Calendar
 
     Returns
     -------
@@ -265,6 +266,17 @@ def to_datetime(arg, errors='raise', dayfirst=False, yearfirst=False,
     98   2000-04-08
     99   2000-04-09
     Length: 100, dtype: datetime64[ns]
+    
+    Getting datetime as number od days since 1/1/1960
+    
+    >>> EPOCH1960 = date(1960, 1, 1)
+    >>> daysFromEpoch = range(100)
+    >>> pd.to_datetime(daysFromEpoch, unit='D', origin=EPOCH1960)
+    0    1960-01-01
+    1    1960-01-02
+    ...
+    98   1960-04-08
+    99   1960-04-09
 
     Date that does not meet timestamp limitations:
 
@@ -275,11 +287,10 @@ def to_datetime(arg, errors='raise', dayfirst=False, yearfirst=False,
     """
     
     if origin is not None:
-        import datetime
         from pandas.core.api import Timestamp
         if origin == 'julian':
             arg = arg - Timestamp(0).to_julian_date()
-        elif isinstance(origin, datetime.date):
+        else:
             arg = arg + Timestamp(origin).to_julian_date() - Timestamp(0).to_julian_date()
         
     return _to_datetime(arg, errors=errors, dayfirst=dayfirst, yearfirst=yearfirst,
