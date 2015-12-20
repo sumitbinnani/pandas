@@ -284,6 +284,7 @@ Attributes
    Series.itemsize
    Series.base
    Series.T
+   Series.memory_usage
 
 Conversion
 ~~~~~~~~~~
@@ -525,6 +526,7 @@ These can be accessed like ``Series.dt.<property>``.
    Series.dt.tz_convert
    Series.dt.normalize
    Series.dt.strftime
+   Series.dt.round
 
 **Timedelta Properties**
 
@@ -772,6 +774,7 @@ Attributes and underlying data
    DataFrame.ndim
    DataFrame.size
    DataFrame.shape
+   DataFrame.memory_usage
 
 Conversion
 ~~~~~~~~~~
@@ -1333,6 +1336,7 @@ Attributes
    Index.itemsize
    Index.base
    Index.T
+   Index.memory_usage
 
 Modifying and Computations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1504,7 +1508,7 @@ Time-specific operations
    DatetimeIndex.snap
    DatetimeIndex.tz_convert
    DatetimeIndex.tz_localize
-
+   DatetimeIndex.round
 
 Conversion
 ~~~~~~~~~~
@@ -1545,6 +1549,7 @@ Conversion
 
    TimedeltaIndex.to_pytimedelta
    TimedeltaIndex.to_series
+   TimedeltaIndex.round
 
 GroupBy
 -------
@@ -1658,6 +1663,56 @@ The following methods are available only for ``DataFrameGroupBy`` objects.
 
    DataFrameGroupBy.corrwith
    DataFrameGroupBy.boxplot
+
+Style
+-----
+.. currentmodule:: pandas.core.style
+
+``Styler`` objects are returned by :attr:`pandas.DataFrame.style`.
+
+
+Constructor
+~~~~~~~~~~~
+.. autosummary::
+   :toctree: generated/
+
+   Styler
+
+Style Application
+~~~~~~~~~~~~~~~~~
+.. autosummary::
+   :toctree: generated/
+
+   Styler.apply
+   Styler.applymap
+   Styler.set_precision
+   Styler.set_table_styles
+   Styler.set_caption
+   Styler.set_properties
+   Styler.set_uuid
+   Styler.clear
+
+Builtin Styles
+~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: generated/
+
+   Styler.highlight_max
+   Styler.highlight_min
+   Styler.highlight_null
+   Styler.background_gradient
+   Styler.bar
+
+Style Export and Import
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autosummary::
+   :toctree: generated/
+
+   Styler.render
+   Styler.export
+   Styler.use
 
 .. currentmodule:: pandas
 

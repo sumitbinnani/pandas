@@ -41,6 +41,46 @@ class DatelikeOps(object):
         """
         return np.asarray(self.format(date_format=date_format))
 
+class TimelikeOps(object):
+    """ common ops for TimedeltaIndex/DatetimeIndex, but not PeriodIndex """
+
+    def round(self, freq):
+        """
+        Round the index to the specified freq; this is a floor type of operation
+
+        Paramaters
+        ----------
+        freq : freq string/object
+
+        Returns
+        -------
+        index of same type
+
+        Raises
+        ------
+        ValueError if the freq cannot be converted
+        """
+
+        from pandas.tseries.frequencies import to_offset
+        unit = to_offset(freq).nanos
+
+        # round the local times
+        if getattr(self,'tz',None) is not None:
+            values = self.tz_localize(None).asi8
+        else:
+            values = self.asi8
+        result = (unit*np.floor(values/unit)).astype('i8')
+        attribs = self._get_attributes_dict()
+        if 'freq' in attribs:
+            attribs['freq'] = None
+        if 'tz' in attribs:
+            attribs['tz'] = None
+        result = self._shallow_copy(result, **attribs)
+
+        # reconvert to local tz
+        if getattr(self,'tz',None) is not None:
+            result = result.tz_localize(self.tz)
+        return result
 
 class DatetimeIndexOpsMixin(object):
     """ common ops mixin to support a unified inteface datetimelike Index """
@@ -180,7 +220,7 @@ class DatetimeIndexOpsMixin(object):
 
             return self._simple_new(sorted_values, **attribs)
 
-    def take(self, indices, axis=0, **kwargs):
+    def take(self, indices, axis=0, allow_fill=True, fill_value=None):
         """
         Analogous to ndarray.take
         """
@@ -189,6 +229,12 @@ class DatetimeIndexOpsMixin(object):
         if isinstance(maybe_slice, slice):
             return self[maybe_slice]
         taken = self.asi8.take(com._ensure_platform_int(indices))
+
+        # only fill if we are passing a non-None fill_value
+        if allow_fill and fill_value is not None:
+            mask = indices == -1
+            if mask.any():
+                taken[mask] = tslib.iNaT
         return self._shallow_copy(taken, freq=None)
 
     def get_duplicates(self):
@@ -196,9 +242,14 @@ class DatetimeIndexOpsMixin(object):
         return self._simple_new(values)
 
     @cache_readonly
+    def _isnan(self):
+        """ return if each value is nan"""
+        return (self.asi8 == tslib.iNaT)
+
+    @cache_readonly
     def hasnans(self):
         """ return if I have any nans; enables various perf speedups """
-        return (self.asi8 == tslib.iNaT).any()
+        return self._isnan.any()
 
     @property
     def asobject(self):
@@ -505,9 +556,10 @@ class DatetimeIndexOpsMixin(object):
         if freq is not None and freq != self.freq:
             if isinstance(freq, compat.string_types):
                 freq = frequencies.to_offset(freq)
-            result = Index.shift(self, n, freq)
+            offset = n * freq
+            result = self + offset
 
-            if hasattr(self,'tz'):
+            if hasattr(self, 'tz'):
                 result.tz = self.tz
 
             return result

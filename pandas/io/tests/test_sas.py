@@ -22,9 +22,10 @@ class TestXport(tm.TestCase):
         self.file01 = os.path.join(self.dirpath, "DEMO_G.XPT")
         self.file02 = os.path.join(self.dirpath, "SSHSV1_A.XPT")
         self.file03 = os.path.join(self.dirpath, "DRXFCD_G.XPT")
+        self.file04 = os.path.join(self.dirpath, "paxraw_d_short.xpt")
 
 
-    def test1(self):
+    def test1_basic(self):
         # Tests with DEMO_G.XPT (all numeric file)
 
         # Compare to this
@@ -60,17 +61,17 @@ class TestXport(tm.TestCase):
 
         # Read full file
         data = XportReader(self.file01, index="SEQN").read()
-        tm.assert_frame_equal(data, data_csv)
+        tm.assert_frame_equal(data, data_csv, check_index_type=False)
 
         # Test incremental read with `read` method.
         reader = XportReader(self.file01, index="SEQN")
         data = reader.read(10)
-        tm.assert_frame_equal(data, data_csv.iloc[0:10, :])
+        tm.assert_frame_equal(data, data_csv.iloc[0:10, :], check_index_type=False)
 
         # Test incremental read with `get_chunk` method.
         reader = XportReader(self.file01, index="SEQN", chunksize=10)
         data = reader.get_chunk()
-        tm.assert_frame_equal(data, data_csv.iloc[0:10, :])
+        tm.assert_frame_equal(data, data_csv.iloc[0:10, :], check_index_type=False)
 
 
     def test1_incremental(self):
@@ -85,7 +86,7 @@ class TestXport(tm.TestCase):
         all_data = [x for x in reader]
         data = pd.concat(all_data, axis=0)
 
-        tm.assert_frame_equal(data, data_csv)
+        tm.assert_frame_equal(data, data_csv, check_index_type=False)
 
 
     def test2(self):
@@ -99,7 +100,7 @@ class TestXport(tm.TestCase):
         tm.assert_frame_equal(data, data_csv)
 
 
-    def test3(self):
+    def test_multiple_types(self):
         # Test with DRXFCD_G.XPT (contains text and numeric variables)
 
         # Compare to this
@@ -110,3 +111,19 @@ class TestXport(tm.TestCase):
 
         data = read_sas(self.file03)
         tm.assert_frame_equal(data, data_csv)
+
+
+    def test_truncated_float_support(self):
+        # Test with paxraw_d_short.xpt, a shortened version of:
+        # http://wwwn.cdc.gov/Nchs/Nhanes/2005-2006/PAXRAW_D.ZIP
+        # This file has truncated floats (5 bytes in this case).
+
+        # GH 11713
+
+        data_csv = pd.read_csv(self.file04.replace(".xpt", ".csv"))
+
+        data = XportReader(self.file04).read()
+        tm.assert_frame_equal(data.astype('int64'), data_csv)
+
+        data = read_sas(self.file04)
+        tm.assert_frame_equal(data.astype('int64'), data_csv)
