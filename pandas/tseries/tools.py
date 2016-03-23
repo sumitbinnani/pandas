@@ -268,9 +268,9 @@ def to_datetime(arg, errors='raise', dayfirst=False, yearfirst=False,
     98   2000-04-08
     99   2000-04-09
     Length: 100, dtype: datetime64[ns]
-    
+
     Getting datetime as number of days since 1/1/1960
-    
+
     >>> pd.to_datetime(range(100), unit='D', origin=date(1960, 1, 1))
     0    1960-01-01
     1    1960-01-02
