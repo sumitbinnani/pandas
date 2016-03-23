@@ -182,7 +182,7 @@ def _guess_datetime_format_for_array(arr, **kwargs):
                  mapping={True: 'coerce', False: 'raise'})
 def to_datetime(arg, errors='raise', dayfirst=False, yearfirst=False,
                 utc=None, box=True, format=None, exact=True, coerce=None,
-                unit='ns', infer_datetime_format=False, origin=None):
+                unit='ns', infer_datetime_format=False, origin='unix'):
     """
     Convert argument to datetime.
 
@@ -224,8 +224,9 @@ def to_datetime(arg, errors='raise', dayfirst=False, yearfirst=False,
     infer_datetime_format : boolean, default False
         If no `format` is given, try to infer the format based on the first
         datetime string. Provides a large speed-up in many cases.
-    origin : scalar convertible to Timestamp / string 'julian', default None
+    origin : scalar convertible to Timestamp / string ('julian', 'unix'), default 'unix'
         Define relative offset for the returned dates.
+        - If 'unix', offset is set to 1-1-1970
         - If 'julian', offset is set to beginning of Julian Calendar
         - If Timestamp convertible, offset is set to Timestamp identified by origin
 
@@ -284,17 +285,26 @@ def to_datetime(arg, errors='raise', dayfirst=False, yearfirst=False,
     >>> pd.to_datetime('13000101', format='%Y%m%d', errors='coerce')
     NaT
     """
-    
-    if origin is not None:
-        if origin == 'julian':
-            arg = arg - tslib.Timestamp(0).to_julian_date()
-        else:
-            arg = arg + tslib.Timestamp(origin).to_julian_date() - tslib.Timestamp(0).to_julian_date()
-        
-    return _to_datetime(arg, errors=errors, dayfirst=dayfirst, yearfirst=yearfirst,
-                        utc=utc, box=box, format=format, exact=exact,
-                        unit=unit, infer_datetime_format=infer_datetime_format)
+    if origin == 'unix':
+        return _to_datetime(arg, errors=errors, dayfirst=dayfirst, yearfirst=yearfirst,
+                            utc=utc, box=box, format=format, exact=exact,
+                            unit=unit, infer_datetime_format=infer_datetime_format)
 
+    elif origin == 'julian':
+        if unit != 'D':
+            raise AssertionError("unit must be 'D' for origin='julian'")
+
+        offset = tslib.Timestamp(0).to_julian_date()
+        arg = arg - offset
+        return _to_datetime(arg, errors=errors, dayfirst=dayfirst, yearfirst=yearfirst,
+                            utc=utc, box=box, format=format, exact=exact,
+                            unit=unit, infer_datetime_format=infer_datetime_format)
+
+    else:
+        offset = tslib.Timestamp(origin) - tslib.Timestamp(0)
+        return _to_datetime(arg, errors=errors, dayfirst=dayfirst, yearfirst=yearfirst,
+                            utc=utc, box=box, format=format, exact=exact,
+                            unit=unit, infer_datetime_format=infer_datetime_format) + offset
 
 def _to_datetime(arg, errors='raise', dayfirst=False, yearfirst=False,
                  utc=None, box=True, format=None, exact=True,
