@@ -743,24 +743,26 @@ class TestTimeSeries(tm.TestCase):
         result = to_datetime(s,unit='s')
         expected = Series([ Timestamp('2013-06-09 02:42:28') + timedelta(seconds=t) for t in range(20) ] + [NaT])
         assert_series_equal(result,expected)
-        
+
     def test_to_datetime_origin(self):
         # Addresses Issue Number 11276, 11745
         # for origin as julian
         julian_dates = pd.date_range('2014-1-1', periods=10).to_julian_date().values
         result = Series(pd.to_datetime(julian_dates, unit='D', origin='julian'))
         expected = Series(pd.to_datetime(julian_dates - pd.Timestamp(0).to_julian_date(), unit='D'))
-        assert_series_equal(result,expected)
-        
+        assert_series_equal(result, expected)
+
         # for origin as 1960-01-01
         EPOCH1960 = pd.Timestamp('1960-01-01')
-        EPOCH_TimestampConvertible = [EPOCH1960, EPOCH1960.to_datetime(), EPOCH1960.to_datetime64(), str(EPOCH1960)] 
-        daysFromEpoch = range(5)
-        expected = Series(pd.date_range('1960-1-1', periods=5))
-        
+        EPOCH_TimestampConvertible = [EPOCH1960, EPOCH1960.to_datetime(), EPOCH1960.to_datetime64(), str(EPOCH1960)]
+        units = ['D', 's', 'ms', 'us', 'ns']
+        unitsFromEPOCH = range(5)
+
         for EPOCH in EPOCH_TimestampConvertible:
-            result = Series(pd.to_datetime(daysFromEpoch, unit='D', origin=EPOCH))
-            assert_series_equal(result,expected)
+            for unit in units:
+                expected = Series([pd.Timedelta(x,unit=unit)+EPOCH1960 for x in unitsFromEPOCH])
+                result = Series(pd.to_datetime(unitsFromEPOCH, unit=unit, origin=EPOCH))
+                assert_series_equal(result, expected)
         
         
 
