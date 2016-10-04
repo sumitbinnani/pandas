@@ -24,15 +24,16 @@ New features
 
 .. _whatsnew_0190.dev_api:
 
-to_datetime can be used with Offset
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-``pd.to_datetime`` has a new parameter, ``origin``, to define an offset for ``DatetimeIndex``.
+to_datetime has gained an origin kwarg
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``pd.to_datetime`` has a new parameter, ``origin``, to define reference date for ``DatetimeIndex``.
 
 .. ipython:: python
 
    to_datetime([1,2,3], unit='D', origin=pd.Timestamp('1960-01-01'))
 
-The above code would return days with offset from origin as defined by timestamp set by origin.
+The above code would parse the numeric values as number of days (unit='D')
+since origin as reference date.
 
 pandas development API
 ^^^^^^^^^^^^^^^^^^^^^^
